@@ -193,7 +193,7 @@ class mainState extends Phaser.State {
     /*ENEMIGOS*/
     createEnemies(){
         this.game.enemies = this.add.group();
-        for (var i=0; i<20;i++){
+        for (var i=0; i<50;i++){
             var enemy = new Enemy(this.game, Math.floor(Math.random()*1024),Math.floor(Math.random()*570),
                 'birdYellow', 0);
             this.game.add.existing(enemy);
@@ -263,6 +263,10 @@ class mainState extends Phaser.State {
         console.log(this.game.player.health);
         this.game.damage.play();
         enemy.kill();
+        var enemy = new Enemy(this.game, Math.floor(Math.random()*1024),Math.floor(Math.random()*570),
+            'birdYellow', 0);
+        this.game.add.existing(enemy);
+        this.game.enemies.add(enemy);
         this.blink(player);
         this.game.player.lives -= 1;
         this.game.player.notify();
@@ -288,12 +292,19 @@ class mainState extends Phaser.State {
         this.game.burn.play();
         this.blink(enemy);
         enemy.kill();
-
+        var enemy = new Enemy(this.game, Math.floor(Math.random()*1024),Math.floor(Math.random()*570),
+            'birdYellow', 0);
+        this.game.add.existing(enemy);
+        this.game.enemies.add(enemy);
     }
     enemyTouchesAgua(enemy:Enemy,agua:Phaser.TilemapLayer){
         this.game.drown.play();
         this.blink(enemy);
         enemy.kill();
+        var enemy = new Enemy(this.game, Math.floor(Math.random()*1024),Math.floor(Math.random()*570),
+            'birdYellow', 0);
+        this.game.add.existing(enemy);
+        this.game.enemies.add(enemy);
     }
 
     /*TWEENS Y MUSICA*/
