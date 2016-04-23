@@ -1,4 +1,4 @@
-/// <reference path="phaser/phaser.d.ts"/
+/*/ <reference path="phaser/phaser.d.ts"/*/
 window.onload = () => {
     new CrazyBirds();
 };
@@ -20,14 +20,20 @@ class CrazyBirds extends Phaser.Game{
     miraIzquierda:boolean = false;
     colisionando:boolean = false;
 
+    minutes:number = 0;
+    seconds:number = 0;
+    milliseconds:number = 0;
+
+    timerText:Phaser.Text;
     scoreText:Phaser.Text;
     livesText:Phaser.Text;
+    stateText:Phaser.Text;
 
     TEXT_MARGIN = 5;
     PLAYER_DRAG = 300;
     PLAYER_VELOCITY_X = 300;
     PLAYER_ACCELERATION_Y = -300;
-    ENEMY_VELOCITY_X = 300;
+    ENEMY_VELOCITY_X = 150;
     ENEMY_ACCELERATION_Y = -50;
 
     constructor() {
@@ -50,52 +56,276 @@ class mainState extends Phaser.State {
         this.load.spritesheet('birdYellow', 'assets/birdYellow.png', 34, 24, 6);
 
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
+        this.game.physics.arcade.gravity.y = 800;
         this.game.cursors = this.input.keyboard.createCursorKeys();
     }
 
     create():void {
         super.create();
-        this.createMap()
+        var fondo;
+        fondo = this.add.image(0, 0, 'fondo');
+
+        this.createEnemies();
+        this.createPlayer();
+        this.createMap();
+        this.createTexts();
+
     }
 
     createMap(){
         /*Elementos de mapa*/
-            this.game.tilemap = this.game.add.tilemap('tilemap');
-            this.game.tilemap.addTilesetImage('minecraft', 'tiles');
 
+        this.game.tilemap = this.game.add.tilemap('tilemap');
+        this.game.tilemap.addTilesetImage('minecraft', 'tiles');
 
-            this.game.plataformas = this.game.tilemap.createLayer('Plataformas');
-            this.game.physics.enable(this.game.plataformas, Phaser.Physics.ARCADE);
-            this.game.tilemap.setCollisionBetween(7, 17, true, 'Plataformas');
+        this.game.plataformas = this.game.tilemap.createLayer('Plataformas');
+        this.game.physics.enable(this.game.plataformas, Phaser.Physics.ARCADE);
+        this.game.tilemap.setCollisionBetween(7, 17, true, 'Plataformas');
 
-            this.game.decoracion = this.game.tilemap.createLayer('Decoracion');
+        this.game.decoracion = this.game.tilemap.createLayer('Decoracion');
 
-            this.game.suelo = this.game.tilemap.createLayer('Suelo');
-            this.game.physics.enable(this.game.suelo, Phaser.Physics.ARCADE);
-            this.game.tilemap.setCollisionBetween(3, 4, true, 'Suelo');
+        this.game.suelo = this.game.tilemap.createLayer('Suelo');
+        this.game.physics.enable(this.game.suelo, Phaser.Physics.ARCADE);
+        this.game.tilemap.setCollisionBetween(3, 4, true, 'Suelo');
 
-            this.game.lava = this.game.tilemap.createLayer('Lava');
-            this.game.physics.enable(this.game.lava, Phaser.Physics.ARCADE);
-            //this.game.tilemap.setCollisionBetween(238, 239, true, 'Lava');
+        this.game.lava = this.game.tilemap.createLayer('Lava');
+        this.game.physics.enable(this.game.lava, Phaser.Physics.ARCADE);
+        this.game.tilemap.setCollisionBetween(238, 239, true, 'Lava');
 
-            this.game.agua = this.game.tilemap.createLayer('Agua');
-            this.game.physics.enable(this.game.agua, Phaser.Physics.ARCADE);
-            //this.game.tilemap.setCollisionBetween(178, null, true, 'Agua');
+        this.game.agua = this.game.tilemap.createLayer('Agua');
+        this.game.physics.enable(this.game.agua, Phaser.Physics.ARCADE);
+        this.game.tilemap.setCollisionBetween(0, 178, true, 'Agua');
     }
-    
 
+    /*PLAYER*/
+    createPlayer(){
+        var nouJugador = new Player(0, this.game, 500, 200, 'bird', 0);
+        this.game.player = this.add.existing(nouJugador);
+
+        this.game.player.body.collideWorldBounds = true;
+        this.game.player.checkWorldBounds = true;
+        this.game.player.anchor.setTo(0.5,0.5);
+
+    }
+
+    /*MOVIMIENTOS DEL PLAYER*/
+    volarRight(){
+        this.game.player.animations.add('bird',[0,1,2],20,true);
+        this.game.player.animations.play('bird');
+
+    }
+
+    volarLeft(){
+        this.game.player.animations.add('bird',[3,4,5],20,true);
+        this.game.player.animations.play('bird');
+    }
+
+    upPlayer(){
+        this.game.colisionando = false;
+        this.game.player.body.velocity.y= this.game.PLAYER_ACCELERATION_Y;
+        if(this.game.miraDerecha){
+            this.volarRight();
+        }else if (this.game.miraIzquierda){
+            this.volarLeft();
+        }
+    }
+
+    movePlayer(){
+        if (this.game.cursors.left.isDown) {
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.game.player.body.velocity.x = -this.game.PLAYER_VELOCITY_X;
+            this.game.miraDerecha = false;
+            this.game.miraIzquierda = true;
+        }else if (this.game.cursors.right.isDown) {
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.game.player.body.velocity.x = this.game.PLAYER_VELOCITY_X;
+            this.game.miraIzquierda = false;
+            this.game.miraDerecha = true;
+
+        }else {
+            this.game.player.body.velocity.x = 0;
+        }
+
+        if(this.game.cursors.right.isDown && this.game.colisionando){
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.game.miraIzquierda = false;
+            this.game.miraDerecha = true;
+            this.game.player.frame = 1
+
+        }else if(this.game.cursors.left.isDown && this.game.colisionando){
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.game.miraDerecha = false;
+            this.game.miraIzquierda = true;
+            this.game.player.frame = 4
+
+        }else if(this.game.miraDerecha && !this.game.colisionando){
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.volarRight();
+
+        }else if(this.game.miraIzquierda && !this.game.colisionando){
+            console.log(this.game.miraIzquierda+ "+" +this.game.miraDerecha);
+            this.volarLeft();
+        }
+
+        this.game.input.onTap.addOnce(this.upPlayer,this);
+    }
+
+    /*ENEMIGOS*/
+    createEnemies(){
+        this.game.enemies = this.add.group();
+        for (var i=0; i<20;i++){
+            var enemy = new Enemy(this.game, Math.floor(Math.random()*1024),Math.floor(Math.random()*570),
+                'birdYellow', 0);
+            this.game.add.existing(enemy);
+            this.game.enemies.add(enemy)
+        }
+
+    }
+
+    resetEnemy(enemy:Phaser.Sprite) {
+        enemy.rotation = this.game.physics.arcade.angleBetween(enemy, this.game.player);
+    }
+
+
+    /*TEXTOS*/
+    createTexts() {
+
+        var width = this.scale.bounds.width;
+        var height = this.scale.bounds.height;
+        //Text que indica la puntuació del player
+        this.game.scoreText = this.game.add.text(this.game.TEXT_MARGIN, this.game.TEXT_MARGIN, 'Puntuación: ' + this.game.player.getScore(), {
+            font: "30px Arial",
+            fill: "#ffffff"
+        });
+        this.game.scoreText.fixedToCamera = true;
+
+        this.game.timerText = this.game.add.text(width / 2, this.game.TEXT_MARGIN, String(this.game.time.totalElapsedSeconds()), {
+            font: "30px Arial",
+            fill: "#ffffff"
+        });
+        this.game.timerText.fixedToCamera = true;
+
+        this.game.livesText = this.game.add.text(900, this.game.TEXT_MARGIN, 'Vidas: ' + this.game.player.getLives(), {
+            font: "30px Arial",
+            fill: "#ffffff"
+        });
+        this.game.livesText.fixedToCamera = true;
+
+
+        this.game.stateText = this.add.text(width / 2, height / 2, '', {font: '75px Arial', fill: '#fff'});
+        this.game.stateText.anchor.setTo(0.5, 0.5);
+        this.game.stateText.fixedToCamera = true;
+    }
+
+    updateTimer() {
+        this.game.time.totalElapsedSeconds()
+    }
+
+    /*COLISIONES Y EVENTOS*/
+    colisionNormal(){
+        this.game.colisionando = true;
+    }
+
+    colisiones(){
+        this.physics.arcade.collide(this.game.player, this.game.plataformas, this.colisionNormal, null, this);
+        this.physics.arcade.collide(this.game.player, this.game.suelo, this.colisionNormal, null, this);
+        this.physics.arcade.collide(this.game.player, this.game.agua, this.playerTouchesAgua, null, this);
+        this.physics.arcade.collide(this.game.player, this.game.lava, this.playerTouchesLava, null, this);
+
+        this.physics.arcade.collide(this.game.player, this.game.enemies, this.playerTouchesEnemy, null, this);
+        this.physics.arcade.collide(this.game.enemies, this.game.enemies, this.resetEnemy, null, this);
+        this.physics.arcade.collide(this.game.enemies, this.game.plataformas);
+        this.physics.arcade.collide(this.game.enemies, this.game.suelo);
+        this.physics.arcade.collide(this.game.enemies, this.game.agua);
+        this.physics.arcade.collide(this.game.enemies, this.game.lava, this.enemyTouchesLava, null, this);
+    }
+
+    playerTouchesEnemy(player:Player, enemy:Enemy){
+        console.log(this.game.player.health);
+        enemy.kill();
+        this.blink(player);
+        this.game.player.lives -= 1;
+        this.game.player.notify();
+
+        if (this.game.player.lives == 0){
+            this.gameOver()
+        }
+    }
+
+    playerTouchesLava(player:Player,lava:Phaser.TilemapLayer){
+        this.blink(player);
+        this.gameOverLava();
+    }
+
+    playerTouchesAgua(player:Player,agua:Phaser.TilemapLayer){
+        this.blink(player);
+        this.gameOverAgua();
+    }
+
+    enemyTouchesLava(enemy:Enemy, lava:Phaser.TilemapLayer){
+        this.blink(enemy);
+        enemy.kill();
+
+    }
+    enemyTouchesAgua(enemy:Enemy,agua:Phaser.TilemapLayer){
+        this.blink(enemy);
+        enemy.kill();
+    }
+
+    /*TWEENS Y MUSICA*/
+    blink(sprite:Phaser.Sprite) {
+        var tween = this.add.tween(sprite)
+            .to({alpha: 0.5}, 100, Phaser.Easing.Bounce.Out)
+            .to({alpha: 1.0}, 100, Phaser.Easing.Bounce.Out);
+
+        tween.repeat(5);
+        tween.start();
+    }
+
+    nuevaPartidaTween(){
+
+    }
+
+
+    /*UPDATE*/
     update():void {
-        super.update()
-
+        super.update();
+        this.movePlayer();
+        this.colisiones();
+        this.updateTimer();
     }
 
-
+    /*FIN DEL JUEGO Y RESTART*/
     gameOver(){
-        this.restart();
+        console.log("gameover");
+        this.game.player.kill();
+        this.game.stateText.setText(" LOS PAJAROS LOCOS \n ACABARON CONTIGO! \n Click para empezar otra vez!");
+        this.game.stateText.visible = true;
+        this.input.onTap.addOnce(this.restart, this);
+    }
+
+    gameOverLava(){
+        console.log("gameoverlava");
+        this.game.player.kill();
+        this.game.stateText.setText(" TE QUEMASTE!! \n Click para empezar otra vez!");
+        this.game.stateText.visible = true;
+        this.input.onTap.addOnce(this.restart, this);
+    }
+
+    gameOverAgua(){
+        console.log("gameoveragua");
+        this.game.player.kill();
+        this.game.stateText.setText(" LOS PÁJAROS NO NADAN!! \n Click para empezar otra vez!");
+        this.game.stateText.visible = true;
+        this.input.onTap.addOnce(this.restart, this);
+    }
+
+    render(){
+        this.game.timerText.setText(String(this.game.time.totalElapsedSeconds()));
     }
 
     restart(){
-
+        this.game.state.restart();
     }
 }
 
@@ -114,15 +344,9 @@ class Player extends Phaser.Sprite implements Publisher{
                 frame:string|number){
         super(game, x, y, key, frame);
         this.game = game;
+        this.game.physics.enable(this, Phaser.Physics.ARCADE);
         this.score=score;
         this.health = this.lives;
-
-        this.game.physics.enable(this, Phaser.Physics.ARCADE);
-        this.body.collideWorldBounds = true;
-        this.checkWorldBounds = true;
-        this.body.allowGravity = true;
-        this.anchor.setTo(0.5,0.5);
-        this.body.drag.setTo(this.game.PLAYER_DRAG, this.game.PLAYER_DRAG);
         this.animations.add('bird',[0,1,2],20,true);
         this.animations.play('bird');
 
@@ -186,9 +410,12 @@ class Enemy extends Phaser.Sprite {
                 frame:string|number){
         super(game, x, y, key, frame);
         this.game = game;
+        this.game.physics.enable(this, Phaser.Physics.ARCADE);
         this.health=1;
-        this.anchor.setTo(0.5,0.5);
         this.checkWorldBounds = true;
+        this.anchor.setTo(0.5,0.5);
+        this.VELOCITY_X = this.game.ENEMY_VELOCITY_X;
+        this.body.velocity.setTo(this.VELOCITY_X);
 
         this.animations.add('birdYellow',[0,1,2],20,true);
         this.animations.play('birdYellow');
@@ -196,7 +423,6 @@ class Enemy extends Phaser.Sprite {
 
     update(){
         super.update();
-        this.VELOCITY_X = this.game.ENEMY_VELOCITY_X;
         this.events.onOutOfBounds.add(this.resetEnemy, this);
         this.game.physics.arcade.velocityFromAngle(this.angle, this.VELOCITY_X, this.body.velocity);
     }
