@@ -1,4 +1,5 @@
 /*/ <reference path="phaser/phaser.d.ts"/*/
+import Sound = Phaser.Sound;
 window.onload = () => {
     new CrazyBirds();
 };
@@ -14,17 +15,22 @@ class CrazyBirds extends Phaser.Game{
     agua:Phaser.TilemapLayer;
     decoracion:Phaser.TilemapLayer;
 
+
+    burn:Phaser.Sound;
+    damage:Phaser.Sound;
+    drown:Phaser.Sound;
+    jump:Phaser.Sound;
+
     cursors:Phaser.CursorKeys;
 
     miraDerecha:boolean = false;
     miraIzquierda:boolean = false;
     colisionando:boolean = false;
 
-    minutes:number = 0;
-    seconds:number = 0;
-    milliseconds:number = 0;
+    counter:number = 0;
 
-    timerText:Phaser.Text;
+    timer = new Phaser.Timer(this);
+
     scoreText:Phaser.Text;
     livesText:Phaser.Text;
     stateText:Phaser.Text;
@@ -58,6 +64,11 @@ class mainState extends Phaser.State {
         this.game.physics.startSystem(Phaser.Physics.ARCADE);
         this.game.physics.arcade.gravity.y = 800;
         this.game.cursors = this.input.keyboard.createCursorKeys();
+
+        this.load.audio('jump', 'assets/jump.wav');
+        this.load.audio('drown', 'assets/drown.wav');
+        this.load.audio('burn', 'assets/burn.wav');
+        this.load.audio('damage', 'assets/damage.wav');
     }
 
     create():void {
@@ -68,8 +79,16 @@ class mainState extends Phaser.State {
         this.createEnemies();
         this.createPlayer();
         this.createMap();
+        this.crono();
         this.createTexts();
+        this.createAudio();
+    }
 
+    createAudio(){
+        this.game.burn = this.game.add.audio('burn');
+        this.game.drown = this.game.add.audio('drown')
+        this.game.damage = this.game.add.audio('damage')
+        this.game.jump = this.game.add.audio('jump')
     }
 
     createMap(){
@@ -122,6 +141,7 @@ class mainState extends Phaser.State {
 
     upPlayer(){
         this.game.colisionando = false;
+        this.game.jump.play();
         this.game.player.body.velocity.y= this.game.PLAYER_ACCELERATION_Y;
         if(this.game.miraDerecha){
             this.volarRight();
@@ -199,12 +219,6 @@ class mainState extends Phaser.State {
         });
         this.game.scoreText.fixedToCamera = true;
 
-        this.game.timerText = this.game.add.text(width / 2, this.game.TEXT_MARGIN, String(this.game.time.totalElapsedSeconds()), {
-            font: "30px Arial",
-            fill: "#ffffff"
-        });
-        this.game.timerText.fixedToCamera = true;
-
         this.game.livesText = this.game.add.text(900, this.game.TEXT_MARGIN, 'Vidas: ' + this.game.player.getLives(), {
             font: "30px Arial",
             fill: "#ffffff"
@@ -212,13 +226,18 @@ class mainState extends Phaser.State {
         this.game.livesText.fixedToCamera = true;
 
 
-        this.game.stateText = this.add.text(width / 2, height / 2, '', {font: '75px Arial', fill: '#fff'});
+        this.game.stateText = this.add.text(width / 2, height / 2, '', {font: '75px Arial', fill: '#000000'});
         this.game.stateText.anchor.setTo(0.5, 0.5);
         this.game.stateText.fixedToCamera = true;
     }
 
-    updateTimer() {
-        this.game.time.totalElapsedSeconds()
+    crono(){
+        this.game.timer.loop(Phaser.Timer.SECOND, this.updateTimer, this);
+        this.game.timer.start();
+    }
+
+    updateTimer(){
+        this.game.counter++;
     }
 
     /*COLISIONES Y EVENTOS*/
@@ -242,6 +261,7 @@ class mainState extends Phaser.State {
 
     playerTouchesEnemy(player:Player, enemy:Enemy){
         console.log(this.game.player.health);
+        this.game.damage.play();
         enemy.kill();
         this.blink(player);
         this.game.player.lives -= 1;
@@ -253,21 +273,25 @@ class mainState extends Phaser.State {
     }
 
     playerTouchesLava(player:Player,lava:Phaser.TilemapLayer){
+        this.game.burn.play();
         this.blink(player);
         this.gameOverLava();
     }
 
     playerTouchesAgua(player:Player,agua:Phaser.TilemapLayer){
+        this.game.drown.play();
         this.blink(player);
         this.gameOverAgua();
     }
 
     enemyTouchesLava(enemy:Enemy, lava:Phaser.TilemapLayer){
+        this.game.burn.play();
         this.blink(enemy);
         enemy.kill();
 
     }
     enemyTouchesAgua(enemy:Enemy,agua:Phaser.TilemapLayer){
+        this.game.drown.play();
         this.blink(enemy);
         enemy.kill();
     }
@@ -282,10 +306,6 @@ class mainState extends Phaser.State {
         tween.start();
     }
 
-    nuevaPartidaTween(){
-
-    }
-
 
     /*UPDATE*/
     update():void {
@@ -298,30 +318,32 @@ class mainState extends Phaser.State {
     /*FIN DEL JUEGO Y RESTART*/
     gameOver(){
         console.log("gameover");
+        this.game.timer.pause();
         this.game.player.kill();
-        this.game.stateText.setText(" LOS PAJAROS LOCOS \n ACABARON CONTIGO! \n Click para empezar otra vez!");
+        this.game.stateText.setText(" LOS PAJAROS LOCOS \n ACABARON CONTIGO! \n Has aguantado vivo "+this.game.counter+" \n vueltas.\n Click para empezar otra vez!");
         this.game.stateText.visible = true;
+        this.game.counter = 0;
         this.input.onTap.addOnce(this.restart, this);
     }
 
     gameOverLava(){
         console.log("gameoverlava");
+        this.game.timer.pause();
         this.game.player.kill();
-        this.game.stateText.setText(" TE QUEMASTE!! \n Click para empezar otra vez!");
+        this.game.stateText.setText(" TE QUEMASTE!! \n Has aguantado vivo "+this.game.counter+"\n vueltas. \n Click para empezar otra vez!");
         this.game.stateText.visible = true;
+        this.game.counter = 0;
         this.input.onTap.addOnce(this.restart, this);
     }
 
     gameOverAgua(){
         console.log("gameoveragua");
+        this.game.timer.pause();
         this.game.player.kill();
-        this.game.stateText.setText(" LOS PÁJAROS NO NADAN!! \n Click para empezar otra vez!");
+        this.game.stateText.setText(" LOS PÁJAROS NO NADAN!! \n Has aguantado vivo "+this.game.counter+" \n vueltas.\n Click para empezar otra vez!");
         this.game.stateText.visible = true;
+        this.game.counter = 0;
         this.input.onTap.addOnce(this.restart, this);
-    }
-
-    render(){
-        this.game.timerText.setText(String(this.game.time.totalElapsedSeconds()));
     }
 
     restart(){
