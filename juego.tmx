@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="32" height="24" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="minecraft" tilewidth="32" tileheight="32">
+  <image source="../../../../minecraft.png" trans="ff00ff" width="512" height="512"/>
+ </tileset>
+ <layer name="Suelo" width="32" height="24">
+  <properties>
+   <property name="colisiona" value="true"/>
+   <property name="esSuelo" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaOAfoCFCEyMPnLNZiYCYwPkqCEX09J+AL24AN0=
+  </data>
+ </layer>
+ <layer name="Agua" width="32" height="24">
+  <properties>
+   <property name="lento" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSgYBaNgcIFNWDA5akbtxwQA25kU3Q==
+  </data>
+ </layer>
+ <layer name="Plataformas" width="32" height="24">
+  <properties>
+   <property name="colisiona" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYBjZgB0LxiUHA4JYzEEWI9Y8ZDlSgCAOPFwAvrDBJUeOnsEAiEkL5LidkHmUhgk10jE2IIiDTS/zcOUpYuMJW1kxXPMoNja5ZtEiLVHTHkJ66eWHwQAI1X+kAGx1IqEwJLX+I8eOUTAKRgIAALh1A/E=
+  </data>
+ </layer>
+ <layer name="Lava" width="32" height="24" visible="0">
+  <properties>
+   <property name="muere" value="true"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJzt07EJAEAIBEH7L/Zt4XNDuUSYgS1hq9h4IyAj/ZRHIatHwD0fGBcLLQ==
+  </data>
+ </layer>
+ <layer name="Decoracion" width="32" height="24">
+  <data encoding="base64" compression="zlib">
+   eJztVtEKgCAM9DenL/3/V2Tg4FgbKzMc5cFI1E65u0UpzQXVKrVyG2dYK21Ozl/hZL6inIXPhTM8vbU11tvii6r1cW/On4Weu3t8T/OH/RJV25Fgj7xcel5+BWSMe4C6vZkl/CbfPQezrr2LvH/oh1FgXbG/RmvI/NKj5dN8oBfoP+ZgU0p6ae0hZe/6/4qDHUKYJbk=
+  </data>
+ </layer>
+</map>
